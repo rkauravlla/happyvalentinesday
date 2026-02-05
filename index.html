@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Be My Valentine?</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600&display=swap');
+
+:root{
+  --primary:#d62828;
+  --primary2:#c1121f;
+  --bg:#fff0f3;
+  --text:#590d22;
+  --card:rgba(255,255,255,.78);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  font-family:'Quicksand',sans-serif;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  text-align:center;
+  color:var(--text);
+}
+
+#bg{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.bg-img{
+  position:absolute;
+  opacity:.22;
+  border-radius:12px;
+  animation:float 22s linear infinite;
+}
+
+@keyframes float{
+  from{transform:translateY(110vh) rotate(0deg)}
+  to{transform:translateY(-20vh) rotate(360deg)}
+}
+
+.wrap{position:relative;z-index:5;width:min(820px,94vw);padding:18px 0}
+h1{
+  font-family:'Dancing Script',cursive;
+  font-size:3.4rem;
+  color:var(--primary);
+  margin:0 0 14px;
+}
+
+p{margin:10px 0; font-size:1.08rem; line-height:1.55}
+
+.btnrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+button{
+  border:0;
+  background:var(--primary);
+  color:#fff;
+  padding:14px 38px;
+  font-size:1.15rem;
+  border-radius:999px;
+  font-weight:700;
+  cursor:pointer;
+  user-select:none;
+}
+button:hover{background:var(--primary2)}
+button.secondary{background:#777}
+button.secondary:hover{background:#666}
+
+.screen{display:none;flex-direction:column;align-items:center;gap:10px}
+.screen.active{display:flex}
+
+/* ---------- First page gallery ---------- */
+#gallery{
+  width:100%;
+  background:var(--card);
+  border-radius:18px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  margin:10px 0 6px;
+}
+#gallery img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  border-radius:14px;
+  transform:scale(1);
+  transition:transform .2s ease;
+}
+#gallery img:hover{transform:scale(1.03)}
+@media (max-width:620px){
+  h1{font-size:2.8rem}
+  #gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #gallery img{height:130px}
+}
+
+/* ---------- Game + field ---------- */
+.card{
+  width:100%;
+  background:var(--card);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+video{
+  width:100%;
+  max-width:720px;
+  border-radius:16px;
+  background:#000;
+}
+
+#gameWrap{width:100%;max-width:720px}
+#gameHud{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;flex-wrap:wrap;margin:8px 0 10px;
+  font-weight:700;
+}
+#gameHud span{background:rgba(255,255,255,.65); padding:8px 12px; border-radius:999px}
+canvas{
+  width:100%;
+  height:360px;
+  background:rgba(255,255,255,.65);
+  border-radius:16px;
+  display:block;
+}
+.small{font-size:.98rem;opacity:.9}
+
+/* The "NO" button is present AND impossible to hover */
+#no1{
+  position:relative;
+  touch-action:none;
+}
+/* --- layout spacing fixes --- */
+#s1{gap:14px}
+#s1 h1{margin-bottom:4px}
+#btnRow1{margin-top:6px}
+
+/* Keep the gallery from crowding text/buttons */
+#gallery{margin-top:6px;margin-bottom:8px}
+
+/* --- lightbox (expandable images) --- */
+#lightbox{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(0,0,0,.72);
+  z-index:9999;
+}
+#lightbox.active{display:flex}
+#lightbox img{
+  max-width:min(980px, 96vw);
+  max-height:88vh;
+  width:auto;
+  height:auto;
+  border-radius:18px;
+  box-shadow:0 18px 70px rgba(0,0,0,.5);
+}
+#lightbox .hint{
+  position:absolute;
+  bottom:12px;
+  left:0; right:0;
+  text-align:center;
+  color:#fff;
+  font-weight:700;
+  opacity:.85;
+  font-size:.95rem;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="bg"></div>
+
+<div class="wrap">
+
+  <!-- SCREEN 1: Landing page with photos + YES/NO -->
+  <div id="s1" class="screen active">
+    <h1>Will you be my Valentine?</h1>
+
+    <div id="gallery" aria-label="Photos"></div>
+
+    <div class="btnrow" id="btnRow1">
+      <button id="yes1">YES ❤️</button>
+      <button id="no1" class="secondary" aria-disabled="true">NO</button>
+    </div>
+
+    <div class="small">P.S. Try to click “NO”… 😇</div>
+  </div>
+
+  <!-- SCREEN 2: Love note + video + option to play game -->
+  <div id="s2" class="screen">
+    <h1>Yay! 💖</h1>
+
+    <div class="card">
+      <p>
+        I love you more than I can put into words, but I’m going to try anyway.
+        You make my days brighter, my heart calmer, and my life feel like home.
+        Thank you for being you — I’m so lucky I get to love you.
+        Happy Valentine’s Day, my love. ❤️
+      </p>
+      <video id="vid" controls playsinline></video>
+
+      <div class="btnrow">
+        <button id="playGame">Play a Valentine game 💘</button>
+        <button id="backHome" class="secondary">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Valentine game -->
+  <div id="s3" class="screen">
+    <h1>Heart Catch 💘</h1>
+
+    <div id="gameWrap" class="card">
+      <div id="gameHud">
+        <span id="score">Score: 0</span>
+        <span id="time">Time: 30</span>
+        <span id="target">Target: 14</span>
+      </div>
+
+      <canvas id="game" width="900" height="450" aria-label="Heart Catch game"></canvas>
+
+      <p class="small">
+        Move the basket with your mouse/finger (or arrow keys). Catch <b>14</b> hearts before time runs out!
+      </p>
+
+      <div class="btnrow">
+        <button id="restart">Restart</button>
+        <button id="toVideo" class="secondary">Back to the video</button>
+      </div>
+
+      <p id="gameMsg" style="margin-top:8px;font-weight:800"></p>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- Lightbox for expandable photos -->
+<div id="lightbox" aria-label="Expanded photo viewer" role="dialog" aria-modal="true">
+  <img id="lightboxImg" alt="Expanded photo" />
+  <div class="hint">Tap/click anywhere to close • Use ← / → to browse</div>
+</div>
+
+<audio id="sndClick"></audio>
+<audio id="sndDodge"></audio>
+<audio id="sndWin"></audio>
+
+<script>
+/* ---------- FILES YOU CURRENTLY HAVE (NO EXTENSIONS) ---------- */
+const VIDEO_BASE = "25F2C07F-B9B3-47B1-80DE-A939F3E4E87D";
+const IMAGE_BASES = [
+  "IMG_0243","IMG_1147","IMG_1614","IMG_4809",
+  "IMG_5266","IMG_5711","IMG_7557","IMG_7926","IMG_8841"
+];
+const SOUND_BASES = { click:"click", dodge:"dodge", win:"win" };
+
+/* ---------- HELPERS ---------- */
+function rand(n){return Math.floor(Math.random()*n)}
+function clamp(v,min,max){return Math.max(min, Math.min(max, v))}
+
+async function tryLoad(el, bases, exts){
+  for(const b of bases){
+    for(const e of exts){
+      const src = e ? `${b}.${e}` : b;
+      try{
+        el.src = src;
+        // video/audio load is best-effort; don't hard fail
+        el.load?.();
+        return src;
+      }catch{}
+    }
+  }
+  return null;
+}
+
+// returns first working src for a given base across extensions
+async function firstWorkingSrc(base, exts){
+  for(const ext of exts){
+    const src = ext ? `${base}.${ext}` : base;
+    const ok = await new Promise(res=>{
+      const img = new Image();
+      img.onload = ()=>res(true);
+      img.onerror = ()=>res(false);
+      img.src = src;
+    });
+    if(ok) return src;
+  }
+  return null;
+}
+
+/* ---------- BACKGROUND FLOATING IMAGES ---------- */
+const bg = document.getElementById("bg");
+function addBg(src){
+  const i=document.createElement("img");
+  i.src=src;
+  i.className="bg-img";
+  i.style.width=80+Math.random()*160+"px";
+  i.style.left=Math.random()*100+"vw";
+  i.style.top=Math.random()*100+"vh";
+  i.style.animationDuration=18+Math.random()*24+"s";
+  bg.appendChild(i);
+}
+(async()=>{
+  for(const b of IMAGE_BASES){
+    // same behavior as before: attempt multiple extensions
+    for(const ext of ["jpg","jpeg","png","",null]){
+      const src = ext?`${b}.${ext}`:b;
+      const img=new Image();
+      img.onload=()=>addBg(src);
+      img.src=src;
+    }
+  }
+})();
+
+/* ---------- SCREENS ---------- */
+const $ = (id)=>document.getElementById(id);
+function show(id){
+  ["s1","s2","s3"].forEach(x=>$(x).classList.remove("active"));
+  $(id).classList.add("active");
+
+  // Ensure video audio ONLY plays on the video screen.
+  const v = $("vid");
+  if(v && id !== "s2"){
+    try{ v.pause(); }catch{}
+    // Optional: also reset so it doesn't keep "talking" in the background on some mobile browsers
+    try{ v.currentTime = v.currentTime; }catch{}
+  }
+}
+
+/* ---------- SOUND ---------- */
+const c=$("sndClick"), d=$("sndDodge"), w=$("sndWin");
+(async()=>{
+  await tryLoad(c,[SOUND_BASES.click],["mp3","wav","",null]);
+  await tryLoad(d,[SOUND_BASES.dodge],["mp3","wav","",null]);
+  await tryLoad(w,[SOUND_BASES.win],["mp3","wav","",null]);
+})();
+function play(a){try{a.currentTime=0;a.play()}catch{}}
+
+/* ---------- (1) Landing page photos ---------- */
+(async function buildGallery(){
+  const gallery = $("gallery");
+  const exts = ["jpg","jpeg","png","webp",""];
+  const wanted = IMAGE_BASES.slice(0, 6); // show 6 on the landing page
+
+  const loaded = [];
+  for(const base of wanted){
+    const src = await firstWorkingSrc(base, exts);
+    if(!src) continue;
+    loaded.push(src);
+
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "photo";
+    img.tabIndex = 0;
+    img.title = "Click to expand";
+    img.style.cursor = "zoom-in";
+    gallery.appendChild(img);
+  }
+
+  // If none loaded, show a friendly placeholder
+  if(!gallery.children.length){
+    gallery.innerHTML = `<div style="grid-column:1/-1;padding:18px;font-weight:700;">
+      (Add your images next to this HTML file in the repo — they’ll show up here 💗)
+    </div>`;
+    return;
+  }
+
+  // Lightbox wiring
+  const lb = $("lightbox");
+  const lbImg = $("lightboxImg");
+  let idx = 0;
+
+  function openAt(i){
+    idx = (i + loaded.length) % loaded.length;
+    lbImg.src = loaded[idx];
+    lb.classList.add("active");
+    // prevent background scroll on mobile
+    document.body.style.overflow = "hidden";
+  }
+  function closeLb(){
+    lb.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+  function next(){ openAt(idx + 1); }
+  function prev(){ openAt(idx - 1); }
+
+  [...gallery.querySelectorAll("img")].forEach((img, i)=>{
+    img.addEventListener("click", ()=>openAt(i));
+    img.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openAt(i); }
+    });
+  });
+
+  lb.addEventListener("click", closeLb);
+  window.addEventListener("keydown", (e)=>{
+    if(!lb.classList.contains("active")) return;
+    if(e.key === "Escape") closeLb();
+    if(e.key === "ArrowRight") next();
+    if(e.key === "ArrowLeft") prev();
+  });
+})();
+
+/* ---------- (2) NO button present on page 1 and impossible to hover ---------- */
+const no1 = $("no1");
+const btnRow1 = $("btnRow1");
+
+function moveNoButton(){
+  const row = btnRow1.getBoundingClientRect();
+  const b = no1.getBoundingClientRect();
+
+  // Choose a new position near the row, but keep it on-screen
+  const pad = 14;
+  const maxX = window.innerWidth - b.width - pad;
+  const maxY = window.innerHeight - b.height - pad;
+
+  // Start around the button row area
+  let x = row.left + Math.random() * (row.width - b.width);
+  let y = row.top + Math.random() * (row.height + 60) - 10;
+
+  x = clamp(x, pad, maxX);
+  y = clamp(y, pad, maxY);
+
+  // Use fixed positioning so it can "run away"
+  no1.style.position = "fixed";
+  no1.style.left = x + "px";
+  no1.style.top = y + "px";
+}
+
+// Move before the pointer can "land" on it
+document.addEventListener("mousemove", (e)=>{
+  const r = no1.getBoundingClientRect();
+  const cx = r.left + r.width/2;
+  const cy = r.top + r.height/2;
+  const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+  if(dist < 110){ moveNoButton(); play(d); }
+});
+
+// Extra safety: if it ever gets focused (keyboard), kick it away
+no1.addEventListener("focus", ()=>{ moveNoButton(); });
+
+// Mobile: dodge on touch approach
+document.addEventListener("touchstart", (e)=>{
+  const t = e.touches?.[0];
+  if(!t) return;
+  const r = no1.getBoundingClientRect();
+  const cx = r.left + r.width/2;
+  const cy = r.top + r.height/2;
+  const dist = Math.hypot(t.clientX - cx, t.clientY - cy);
+  if(dist < 140){ moveNoButton(); play(d); }
+},{passive:true});
+
+// place it once initially
+moveNoButton();
+window.addEventListener("resize", moveNoButton);
+
+/* ---------- Buttons ---------- */
+$("yes1").onclick=async()=>{
+  play(c);
+  show("s2");
+  const v=$("vid");
+  await tryLoad(v,[VIDEO_BASE],["mp4","mov","webm","",null]);
+  try{ await v.play?.(); }catch{}
+};
+$("backHome").onclick=()=>{ play(c); try{$("vid").pause();}catch{} show("s1"); };
+$("playGame").onclick=()=>{ play(c); try{$("vid").pause();}catch{} show("s3"); startGame(true); };
+$("toVideo").onclick=()=>{ play(c); show("s2"); };
+$("restart").onclick=()=>{ play(c); startGame(true); };
+
+/* ---------- (5) Valentine-themed game: Heart Catch ---------- */
+const canvas = $("game");
+const ctx = canvas.getContext("2d");
+const msg = $("gameMsg");
+
+let basket = { x: canvas.width/2, w: 140, h: 24, y: canvas.height - 48 };
+let hearts = [];
+let score = 0;
+let timeLeft = 30;
+const target = 14;
+let running = false;
+let lastSpawn = 0;
+let lastTick = 0;
+
+function resetGame(){
+  basket.x = canvas.width/2;
+  hearts = [];
+  score = 0;
+  timeLeft = 30;
+  $("score").textContent = "Score: 0";
+  $("time").textContent = "Time: 30";
+  $("target").textContent = "Target: " + target;
+  msg.textContent = "";
+}
+
+function spawnHeart(){
+  hearts.push({
+    x: 30 + Math.random() * (canvas.width - 60),
+    y: -20,
+    vy: 170 + Math.random() * 220,
+    r: 16 + Math.random() * 10
+  });
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // soft floor line
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.moveTo(0, basket.y + basket.h + 12);
+  ctx.lineTo(canvas.width, basket.y + basket.h + 12);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // basket
+  ctx.beginPath();
+  ctx.roundRect(basket.x - basket.w/2, basket.y, basket.w, basket.h, 12);
+  ctx.fill();
+
+  // little "bows" on basket
+  ctx.globalAlpha = 0.25;
+  ctx.beginPath();
+  ctx.arc(basket.x - basket.w/4, basket.y + basket.h/2, 9, 0, Math.PI*2);
+  ctx.arc(basket.x + basket.w/4, basket.y + basket.h/2, 9, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // hearts
+  for(const h of hearts){
+    drawHeart(h.x, h.y, h.r);
+  }
+}
+
+function drawHeart(x, y, s){
+  // simple heart path
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s/32, s/32);
+  ctx.beginPath();
+  ctx.moveTo(0, 10);
+  ctx.bezierCurveTo(0, 0, -16, 0, -16, 12);
+  ctx.bezierCurveTo(-16, 24, 0, 28, 0, 36);
+  ctx.bezierCurveTo(0, 28, 16, 24, 16, 12);
+  ctx.bezierCurveTo(16, 0, 0, 0, 0, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function update(dt){
+  // spawn hearts
+  lastSpawn += dt;
+  if(lastSpawn > 0.45){
+    spawnHeart();
+    lastSpawn = 0;
+  }
+
+  // move hearts
+  for(const h of hearts){
+    h.y += h.vy * dt;
+  }
+
+  // collisions / cleanup
+  hearts = hearts.filter(h=>{
+    const inCatchZone =
+      h.y + h.r >= basket.y &&
+      h.y - h.r <= basket.y + basket.h &&
+      Math.abs(h.x - basket.x) <= basket.w/2;
+
+    if(inCatchZone){
+      score++;
+      $("score").textContent = "Score: " + score;
+      play(c);
+      return false;
+    }
+    return h.y - h.r < canvas.height + 30;
+  });
+
+  // timer
+  lastTick += dt;
+  if(lastTick >= 1){
+    timeLeft--;
+    $("time").textContent = "Time: " + timeLeft;
+    lastTick = 0;
+  }
+
+  // win/lose
+  if(score >= target){
+    endGame(true);
+  }else if(timeLeft <= 0){
+    endGame(false);
+  }
+}
+
+function endGame(win){
+  running = false;
+  if(win){
+    msg.textContent = "You did it! 💖 You caught all the hearts — just like you caught mine.";
+    play(w);
+  }else{
+    msg.textContent = "So close! 💞 Want to try again and catch a few more hearts?";
+    play(d);
+  }
+}
+
+function loop(ts){
+  if(!running) return;
+  if(!loop.last) loop.last = ts;
+  const dt = Math.min(0.033, (ts - loop.last) / 1000);
+  loop.last = ts;
+
+  update(dt);
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+function startGame(hardReset=false){
+  if(hardReset){ resetGame(); }
+  running = true;
+  lastSpawn = 0;
+  lastTick = 0;
+  loop.last = 0;
+  requestAnimationFrame(loop);
+}
+
+// mouse controls
+canvas.addEventListener("mousemove",(e)=>{
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * canvas.width;
+  basket.x = clamp(x, basket.w/2, canvas.width - basket.w/2);
+});
+
+// touch controls
+canvas.addEventListener("touchmove",(e)=>{
+  const t = e.touches?.[0];
+  if(!t) return;
+  const r = canvas.getBoundingClientRect();
+  const x = (t.clientX - r.left) / r.width * canvas.width;
+  basket.x = clamp(x, basket.w/2, canvas.width - basket.w/2);
+},{passive:true});
+
+// keyboard controls
+const keys = new Set();
+window.addEventListener("keydown",(e)=>{
+  if(e.key === "ArrowLeft" || e.key === "ArrowRight"){ keys.add(e.key); }
+});
+window.addEventListener("keyup",(e)=>{ keys.delete(e.key); });
+
+function keyStep(){
+  if(!running){ requestAnimationFrame(keyStep); return; }
+  const speed = 520/60;
+  if(keys.has("ArrowLeft")) basket.x -= speed;
+  if(keys.has("ArrowRight")) basket.x += speed;
+  basket.x = clamp(basket.x, basket.w/2, canvas.width - basket.w/2);
+  requestAnimationFrame(keyStep);
+}
+requestAnimationFrame(keyStep);
+</script>
+</body>
+</html>
